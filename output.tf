@@ -1,11 +1,11 @@
 output "bucket_domain_name" {
   value       = module.s3_bucket.bucket_domain_name
-  description = "FQDN of bucket"
+  description = "FQDN bucket"
 }
 
 output "bucket_id" {
   value       = module.s3_bucket.bucket_id
-  description = "Bucket Name (aka ID)"
+  description = "Bucket ID Name"
 }
 
 output "bucket_arn" {
@@ -15,15 +15,15 @@ output "bucket_arn" {
 
 output "user_name" {
   value       = module.s3_bucket.user_name
-  description = "Normalized IAM user name"
+  description = "IAM user name"
 }
 
 output "user_arn" {
   value       = module.s3_bucket.user_arn
-  description = "The ARN assigned by AWS for the user"
+  description = "ARN Assignment for the AWS user"
 }
 
 output "user_unique_id" {
   value       = module.s3_bucket.user_unique_id
-  description = "The user unique ID assigned by AWS"
+  description = "AWS ID User"
 }

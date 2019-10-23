@@ -1,4 +1,4 @@
-region = "us-west-1"
+region = "US-West"
 
 namespace = "eg"
 
