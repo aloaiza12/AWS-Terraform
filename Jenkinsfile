@@ -1,0 +1,119 @@
+pipeline { 
+    agent master 
+    parameters {
+        string(name: 'Bucket_Name', defaultValue: 'mybucket')
+        choice(name: 'ENVIRONMENT', choices: ['dev', 'qa', 'uat', 'prod'], description: 'Environment')
+        choice(name: 'TERRAFORM_ACTION', choices: ['plan', 'apply', 'destroy'], description: 'Terraform Action')
+    }
+    environment {
+        Bucket_Name="$params.Bucket_Name"
+        ENVIRONMENT="$params.ENVIRONMENT"
+        TERRAFORM_ACTION="$params.TERRAFORM_ACTION"
+    }
+    
+
+    stages {
+        stage('Create Terraform') {
+            when {
+                expression {
+                    env.BRANCH_NAME=~ "master"
+                }
+                    environment name: 'TERRAFORM_ACTION', value: 'apply'
+
+            }
+            steps {
+                script {
+                    withCredentials([]) {
+                        echo "Building Terraform terraformS3Backend() buildTerraform()"
+                    }
+                }
+            }
+        }
+        stage('Upload File to S3') {
+            when {
+                
+                    environment name: 'TERRAFORM_ACTION', value: 'apply'
+                
+            }
+            steps {
+                sh 'echo "####################################### UploadS3()"'
+            }
+        }
+        stage('Destroy Cluster') {
+            when {
+                environment name: 'TERRAFORM_ACTION', value: 'destroy'
+            }
+            steps {
+                sh 'echo "####################################### terraformS3Backend() Destroy Terraform destroyTerraform()"'
+            }
+        }
+    }
+}
+
+def terraformS3Backend(S3_AWS_ACCESS_KEY_ID, S3_AWS_SECRET_ACCESS_KEY, TERRAFORM_BACKEND_KEY, S3_BUCKET, S3_REGION, TERRAFORM_FILE_PATH,  TERRAFORM_BASE_DIR)
+{
+    try { 
+        sh '''
+        echo "FILE_PATH: $TERRAFORM_FILE_PATH"
+        echo "BASE_DIR: $TERRAFORM_BASE_DIR"
+        echo "TERRAFORM_BACKEND_KEY: $TERRAFORM_BACKEND_KEY"
+        echo "S3_BUCKET: $S3_BUCKET"
+        echo "S3_REGION: $S3_REGION"
+
+        cat > main.tmp <<EOF
+        terraform {
+         backend "s3" {
+          bucket = "${S3_BUCKET}"
+          key = "${TERRAFORM_BACKEND_KEY}"
+          region = "${S3_REGION}"
+          access_key = "${S3_AWS_ACCESS_KEY_ID}"
+          secret_key = "${S3_AWS_SECRET_ACCESS_KEY}"
+         }
+        }
+        EOF
+
+        cat main.tmp $TERRAFORM_FILE_PATH > combined.tmp
+        cat combined.tmp
+        mv combined.tmp $TERRAFORM_FILE_PATH
+        rm main.tmp
+        '''
+
+        // Added    terraform init
+        sh '''
+            cd  $TERRAFORM_BASE_DIR
+            terraform init
+            '''
+
+    } catch(Exception e){
+       echo e.getMessage()
+       //Error
+       return
+    }
+}
+
+
+def buildterraform() {
+
+sh '''
+    terraform plan
+
+    if [[ $TERRAFORM_ACTION == *"apply"* ]]; then
+            terraform apply -auto-approve 
+    elif [[ $TERRAFORM_ACTION == *"destroy"* ]]; then
+            terraform destroy -auto-approve 
+
+    else
+        terraform plan
+    fi
+
+'''
+
+}
+
+def UploadS3() {
+
+    sh '''
+    echo "Uploaded in Terraform Script"
+    '''
+
+}
